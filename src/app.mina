@@ -5,25 +5,8 @@
     "navigationBarTextStyle": "black",
   },
   "pages": [
-    "pages/home.mina"
+    "pages/home.mina",
+    "pages/detail.mina"
   ]
 }
 </config>
-
-<script>
-import LIST_DATA from './constant'
-
-App({
-  globalData: {},
-
-  onLaunch() {
-    const checkList = wx.getStorageSync('taiwan_checkList')
-
-    if (!checkList) {
-      this.globalData.listData = LIST_DATA
-    } else {
-      this.globalData.listData = JSON.parse(checkList)
-    }
-  }
-})
-</script>

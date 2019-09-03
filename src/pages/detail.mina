@@ -1,0 +1,133 @@
+<style lang="postcss">
+.detail-header {
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(26, 26, 26, .06);
+  box-shadow: 0 1px 3px 0 rgba(23, 81, 153, .05);
+}
+
+.detail-checkList {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 54px;
+  width: 100%;
+}
+
+.detail-checkBoxValue {
+  margin-left: 12px;
+  color: #1f1f1f;
+  flex: auto;
+  height: 54px;
+  line-height: 54px;
+}
+
+.detail-checkBoxValueWithChecked {
+  text-decoration: line-through;
+  color: #9c9c9c;
+}
+
+.detail-section {
+  padding: 0 16px;
+}
+
+.detail-title {
+  font-size: 18px;
+  padding: 16px 0;
+}
+
+.detail-tips {
+  font-size: 15px;
+  color: #9c9c9c;
+  line-height: 24px;
+}
+</style>
+
+<template>
+  <view class="main">
+    <view class="detail-header">
+      <checkbox-group
+        bindchange="checkboxChange"
+        class="detail-checkList"
+      >
+        <label class="detail-checkList">
+          <checkbox value="{{name}}" checked="{{checked}}" class="detail-checkBox" />
+          <view
+            class="{{checked ? 'detail-checkBoxValueWithChecked detail-checkBoxValue' : 'detail-checkBoxValue'}}"
+          >{{name}}</view>
+        </label>
+      </checkbox-group>
+    </view>
+    <view class="detail-section" wx:if="{{tips}}">
+      <view class="detail-title">旅行提示</view>
+      <view class="detail-tips">{{tips}}</view>
+    </view>
+  </view>
+</template>
+
+<script>
+import LIST_DATA from '../constant'
+
+Page({
+  data: {
+    listData: [],
+    tips: '',
+    name: '',
+    id: '',
+    title: '',
+    checked: false,
+  },
+  onLoad(option) {
+    const {id, title} = option
+    const checkList = wx.getStorageSync('taiwan_checkList')
+    let listData = []
+
+    if (!checkList) {
+      listData = LIST_DATA
+    } else {
+      listData = JSON.parse(checkList)
+    }
+
+    const {name, tips, checked} = listData.filter(item => item.title === title)[0].lists.filter(list => list.id === Number(id))[0]
+
+    this.setData({
+      listData,
+      checked,
+      title,
+      id,
+      name,
+      tips,
+    })
+  },
+  checkboxChange: function(e) {
+    const {title, id, listData} = this.data
+
+    const newListData = listData.map(item => {
+      if (item.title === title) {
+        const newlists = item.lists.map(list => {
+          if (list.id === Number(id)) {
+            return {
+              ...list,
+              checked: !list.checked,
+            }
+          }
+
+          return list
+        })
+
+        return {
+          ...item,
+          lists: newlists,
+        }
+      }
+
+      return item
+    })
+
+    this.setData({
+      checked: !this.data.checked,
+    })
+
+    wx.setStorageSync('taiwan_checkList', JSON.stringify(newListData))
+  }
+})
+</script>

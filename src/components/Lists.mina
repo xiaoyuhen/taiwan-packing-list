@@ -6,6 +6,7 @@
 <style lang="postcss">
 .Lists {
   position: relative;
+  padding-bottom: 80px;
 }
 
 .Lists::after {
@@ -53,6 +54,8 @@
   margin-left: 12px;
   color: #1f1f1f;
   flex: auto;
+  height: 54px;
+  line-height: 54px;
 }
 
 .Lists-checkBoxSwiper {
@@ -84,55 +87,184 @@
   border-bottom-right-radius: 100%;
   left: 0;
 }
+
+.Lists-checkBoxValueWithChecked {
+  text-decoration: line-through;
+  color: #9c9c9c;
+}
+
+.Lists-addList {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
+  box-shadow: 0 1px 15px 0 rgba(0, 0, 0, 0.62);
+}
+
+.Lists-Editor {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-top: solid 1px #f0f2f7;
+  background: #fff;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.Lists-EditorContent {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  width: 100%;
+}
+
+.Lists-EditorContentSendButton {
+  widht: 20px;
+  height: 20px;
+  flex: 1;
+  margin-right: 16px;
+}
+
+.Lists-EditorContentCheckbox {
+  width: 25px;
+  height: 25px;
+  border-radius: 5px;
+  border: 1px solid #f0f2f7;
+  min-width: 25px;
+}
+
+.Lists-EditorContentInput {
+  flex: auto;
+  margin-left: 12px;
+  min-width: 200px;
+}
+
+.Lists-EditorTitleList {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  padding-top: 6px;
+  padding-left: 16px;
+}
+
+.Lists-EditorTitle {
+  margin-right: 12px;
+  background: #ededed;
+  height: 30px;
+  width: auto;
+  border-radius: 15px;
+  color: #33373e;
+  padding: 2px 12px;
+  line-height: 30px;
+  display: inline-block
+}
+
+.Lists-EditorTitleWithChoose {
+  background: #4990EE;
+  color: #fff;
+}
 </style>
 
 <template>
-  <view wx:for="{{listData}}" wx:for-item="lists" class="Lists" wx:key="{{lists.title}}">
-    <view class="Lists-title" wx:if="{{lists.lists.length > 0}}">{{lists.name}}</view>
-    <checkbox-group
-      bindchange="checkboxChange"
-      data-value="{{item.name}}"
-      data-title="{{lists.title}}"
-      wx:for="{{lists.lists}}"
-      wx:for-item="item"
-      wx:key="{{index}}"
-      class="Lists-checkList"
-    >
-      <swiper
-        class="Lists-checkBoxSwiper"
-        bindtransition="bindtransition"
-        bindchange="bindchange"
+  <bolck>
+    <view wx:for="{{listData}}" wx:for-item="lists" class="Lists" wx:key="{{lists.title}}">
+      <view class="Lists-title" wx:if="{{lists.lists.length > 0}}">{{lists.name}}</view>
+      <checkbox-group
+        bindchange="checkboxChange"
         data-value="{{item.name}}"
         data-title="{{lists.title}}"
-        current="{{current}}"
-        duration="{{duration}}"
+        wx:for="{{lists.lists}}"
+        wx:for-item="item"
+        wx:key="{{index}}"
+        class="Lists-checkList"
       >
-        <swiper-item>
-          <view class="Lists-checkBoxWrapper">
-            <checkbox value="{{item.name}}" checked="{{item.checked}}" class="Lists-checkBox" />
-            <view class="Lists-checkBoxValue">{{item.name}}</view>
-          </view>
-        </swiper-item>
-        <swiper-item>
-          <view class="Lists-checkBoxWithDelete">
-            <view class="Lists-checkBoxWithMask" wx:if="{{showMask}}" style="width:{{maskWidth}};height:{{maskHeight}}" />
-            <image src="../assets/delete.svg" class="Lists-checkBoxWithDeleteIcon" />
-          </view>
-        </swiper-item>
-      </swiper>
-    </checkbox-group>
-  </view>
+        <swiper
+          class="Lists-checkBoxSwiper"
+          bindtransition="bindtransition"
+          bindchange="bindchange"
+          data-value="{{item.name}}"
+          data-title="{{lists.title}}"
+          current="{{current}}"
+          duration="{{duration}}"
+        >
+          <swiper-item>
+            <view class="Lists-checkBoxWrapper">
+              <checkbox value="{{item.name}}" checked="{{item.checked}}" class="Lists-checkBox" />
+              <view
+                class="{{item.checked ? 'Lists-checkBoxValueWithChecked Lists-checkBoxValue' : 'Lists-checkBoxValue'}}"
+                data-id="{{item.id}}"
+                data-title="{{lists.title}}"
+                bindtap="handleNavigateTo"
+              >{{item.name}}</view>
+            </view>
+          </swiper-item>
+          <swiper-item>
+            <view class="Lists-checkBoxWithDelete">
+              <view class="Lists-checkBoxWithMask" wx:if="{{showMask}}" style="width:{{maskWidth}};height:{{maskHeight}}" />
+              <image src="../assets/delete.svg" class="Lists-checkBoxWithDeleteIcon" />
+            </view>
+          </swiper-item>
+        </swiper>
+      </checkbox-group>
+    </view>
+    <image
+      src="../assets/add.svg"
+      class="Lists-addList"
+      wx:if="{{showAddButton}}"
+      bindtap="handleAddList"
+    />
+    <view class="Lists-Editor" wx:if="{{!showAddButton}}">
+      <view class="Lists-EditorContent">
+        <view class="Lists-EditorContentCheckbox"></view>
+        <input class="Lists-EditorContentInput" placeholder="添加清单" confirm-type="done" bindinput="bindKeyInput" />
+        <image src="../assets/send.svg" class="Lists-EditorContentSendButton" bindtap="handleSend" />
+      </view>
+      <scroll-view scroll-x style="width: calc(100% - 16px); white-space: nowrap; display: flex" class="Lists-EditorTitleList" enable-flex>
+        <view
+          wx:for="{{listData}}"
+          class="{{title === item.title ? 'Lists-EditorTitle Lists-EditorTitleWithChoose' : 'Lists-EditorTitle'}}"
+          data-title="{{item.title}}"
+          bindtap="handleSelect"
+        >{{item.name}}</view>
+      </scroll-view>
+    </view>
+  </bolck>
 </template>
 
 <script>
+import LIST_DATA from '../constant'
+
 Component({
   data: {
-    listData: getApp().globalData.listData,
+    listData: [],
     showMask: false,
     maskHeight: '',
     current: 0,
     maskWidth: '',
     duration: 500,
+    showAddButton: true,
+    title: 'documents',
+    inputValue: '',
+    totalNumber: 55,
+  },
+  pageLifetimes: {
+    show: function() {
+      const checkList = wx.getStorageSync('taiwan_checkList')
+      let listData = []
+
+      if (!checkList) {
+        listData = LIST_DATA
+      } else {
+        listData = JSON.parse(checkList)
+      }
+      this.setData({
+        listData,
+      })
+    }
   },
   methods: {
     checkboxChange: function(e) {
@@ -149,7 +281,7 @@ Component({
           const newlists = item.lists.map(list => {
             if (list.name === value) {
               return {
-                name: value,
+                ...list,
                 checked: !list.checked,
               }
             }
@@ -231,6 +363,61 @@ Component({
 
         wx.setStorageSync('taiwan_checkList', JSON.stringify(newListData))
       }
+    },
+
+    handleNavigateTo: function(e) {
+      const {id, title} = e.target.dataset
+
+      wx.navigateTo({
+        url: `/pages/detail?id=${id}&title=${title}`
+      })
+    },
+
+    handleAddList: function() {
+      this.setData({
+        showAddButton: false,
+      })
+    },
+
+    handleShowAddButton: function() {
+      this.setData({
+        showAddButton: true,
+      })
+    },
+
+    handleSelect: function(e) {
+      const {title} = e.target.dataset
+
+      this.setData({title})
+    },
+
+    handleSend: function() {
+      const {listData, title, inputValue, totalNumber} = this.data
+
+      listData.forEach(item => {
+        if (item.title === title) {
+          item.lists.push({
+            name: inputValue,
+            id: totalNumber + 1,
+            totalNumber: totalNumber + 1,
+            checked: false,
+          })
+        }
+      })
+
+      this.setData({
+        listData,
+      })
+
+      wx.setStorageSync('taiwan_checkList', JSON.stringify(listData))
+
+      this.handleShowAddButton()
+    },
+
+    bindKeyInput: function(e) {
+      this.setData({
+        inputValue: e.detail.value
+      })
     }
   }
 })

@@ -45,12 +45,6 @@
 <script>
 Page({
   data: {
-    isMessageShowed: false,
-  },
-  showMessage () {
-    this.setData({
-      isMessageShowed: true,
-    })
   },
 })
 </script>
