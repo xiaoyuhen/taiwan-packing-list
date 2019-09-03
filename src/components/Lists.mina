@@ -1,0 +1,237 @@
+<config>
+{
+  "component": true
+}
+</config>
+<style lang="postcss">
+.Lists {
+  position: relative;
+}
+
+.Lists::after {
+  content: ' ';
+  width: 100vw;
+  border-bottom: solid 1px #f0f2f7;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: block;
+}
+
+.Lists-title {
+  font-size: 18px;
+  padding: 12px 16px;
+  position: relative;
+}
+
+.Lists-checkList {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 54px;
+}
+
+.Lists-checkBoxWrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  height: 54px;
+}
+
+.Lists-checkList::after,
+.Lists-title::after {
+  content: ' ';
+  width: 100%;
+  border-bottom: solid 1px #f0f2f7;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: block;
+}
+
+.Lists-checkBoxValue {
+  margin-left: 12px;
+  color: #1f1f1f;
+  flex: auto;
+}
+
+.Lists-checkBoxSwiper {
+  width: 100%;
+  height: 54px;
+}
+
+.Lists-checkBoxWithDelete {
+  background: #c2c2c2;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.Lists-checkBoxWithDeleteIcon {
+  width: 24px;
+  height: 24px;
+  left: 40px;
+  position: absolute;
+  z-index: 999;
+}
+
+.Lists-checkBoxWithMask {
+  background: #db3a29;
+  position: absolute;
+  z-index: 99;
+  border-top-right-radius: 100%;
+  border-bottom-right-radius: 100%;
+  left: 0;
+}
+</style>
+
+<template>
+  <view wx:for="{{listData}}" wx:for-item="lists" class="Lists" wx:key="{{lists.title}}">
+    <view class="Lists-title" wx:if="{{lists.lists.length > 0}}">{{lists.name}}</view>
+    <checkbox-group
+      bindchange="checkboxChange"
+      data-value="{{item.name}}"
+      data-title="{{lists.title}}"
+      wx:for="{{lists.lists}}"
+      wx:for-item="item"
+      wx:key="{{index}}"
+      class="Lists-checkList"
+    >
+      <swiper
+        class="Lists-checkBoxSwiper"
+        bindtransition="bindtransition"
+        bindchange="bindchange"
+        data-value="{{item.name}}"
+        data-title="{{lists.title}}"
+        current="{{current}}"
+        duration="{{duration}}"
+      >
+        <swiper-item>
+          <view class="Lists-checkBoxWrapper">
+            <checkbox value="{{item.name}}" checked="{{item.checked}}" class="Lists-checkBox" />
+            <view class="Lists-checkBoxValue">{{item.name}}</view>
+          </view>
+        </swiper-item>
+        <swiper-item>
+          <view class="Lists-checkBoxWithDelete">
+            <view class="Lists-checkBoxWithMask" wx:if="{{showMask}}" style="width:{{maskWidth}};height:{{maskHeight}}" />
+            <image src="../assets/delete.svg" class="Lists-checkBoxWithDeleteIcon" />
+          </view>
+        </swiper-item>
+      </swiper>
+    </checkbox-group>
+  </view>
+</template>
+
+<script>
+Component({
+  data: {
+    listData: getApp().globalData.listData,
+    showMask: false,
+    maskHeight: '',
+    current: 0,
+    maskWidth: '',
+    duration: 500,
+  },
+  methods: {
+    checkboxChange: function(e) {
+      const {value, title} = e.target.dataset
+
+      this.handleCheckBoxChange(value, title)
+    },
+
+    handleCheckBoxChange: function(value, title) {
+      const {listData} = this.data
+
+      const newListData = listData.map(item => {
+        if (item.title === title) {
+          const newlists = item.lists.map(list => {
+            if (list.name === value) {
+              return {
+                name: value,
+                checked: !list.checked,
+              }
+            }
+
+            return list
+          })
+
+          return {
+            ...item,
+            lists: newlists,
+          }
+        }
+
+        return item
+      })
+
+      this.setData({
+        listData: newListData
+      })
+
+      wx.setStorageSync('taiwan_checkList', JSON.stringify(newListData))
+    },
+
+    // TODO: throttle
+    bindtransition: function(e) {
+      const {dx} = e.detail
+      const width = wx.getSystemInfoSync().windowWidth
+      const scalc = dx / width
+
+      // 滑动超过 40% 展示红色动画
+      if (scalc >= 0.4) {
+        this.setData({
+          showMask: true,
+          maskWidth: `${dx * (scalc ** scalc)}px`,
+          maskHeight: `${dx * (scalc ** scalc)}px`,
+        })
+      } else {
+        this.setData({
+          showMask: false,
+          maskWidth: '',
+          maskHeight: '',
+        })
+      }
+    },
+
+    bindchange: function(e) {
+      const {listData} = this.data
+      const {value, title} = e.target.dataset
+      const {source} = e.detail
+
+      if (source === 'touch') {
+        const newListData = listData.map(item => {
+          if (item.title === title) {
+            const newlists = item.lists.filter(list => list.name !== value)
+
+            return {
+              ...item,
+              lists: newlists,
+            }
+          }
+
+          return item
+        })
+
+        // 这里把 duration 设置为 0，避免删除时的动画冲突
+        this.setData({
+          duration: 0,
+        })
+
+        // 500ms 后再进行删除操作，等待动画完成
+        const timer = setTimeout(() => {
+          this.setData({
+            listData: newListData,
+            hasDeleteData: false,
+            current: 0,
+            duration: 500,
+          }, () => clearTimeout(timer))
+        }, 500);
+
+        wx.setStorageSync('taiwan_checkList', JSON.stringify(newListData))
+      }
+    }
+  }
+})
+</script>

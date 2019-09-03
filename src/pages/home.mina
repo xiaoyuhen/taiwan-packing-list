@@ -1,7 +1,7 @@
 <config>
 {
   "usingComponents": {
-    "author": "../components/author.mina"
+    "Lists": "../components/Lists.mina"
   }
 }
 </config>
@@ -38,6 +38,7 @@
       <image src="../assets/taiwan.jpg" class="headerImage" />
       <text class="headerTitle">台湾旅行清单</text>
     </view>
+    <Lists />
   </view>
 </template>
 
